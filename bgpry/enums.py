@@ -1,5 +1,6 @@
 from enum import Enum, unique
 
+from .bgpr import RustRelationships as Relationships
 yamlable_enums = []
 
 
@@ -35,7 +36,7 @@ class Plane(YamlAbleEnum):
     DATA: str = "data_plane"
     CTRL: str = "control_plane"
 
-
+"""
 class Relationships(YamlAbleEnum):
     # Must start at one for the priority
     PROVIDERS: int = 1
@@ -47,7 +48,7 @@ class Relationships(YamlAbleEnum):
     ORIGIN: int = 4
     # Unknown for external programs like extrapoaltor
     UNKNOWN: int = 5
-
+"""
 
 class ROAValidity(YamlAbleEnum):
     """Possible values for ROA Validity

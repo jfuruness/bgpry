@@ -4,6 +4,11 @@ import time
 from bgpry.simulation_engine import ROVSimplePolicy
 from bgpry.enums import SpecialPercentAdoptions
 from bgpry.simulation_framework import Simulation, SubprefixHijack, ScenarioConfig
+from bgpry.bgpr import RustAnnouncement
+
+# Results:
+# PythonAnn + python: 73s
+# RustAnn + Python:
 
 
 class NoopGraphFactory:
@@ -28,7 +33,11 @@ def main():
             SpecialPercentAdoptions.ALL_BUT_ONE,
         ),
         scenario_configs=(
-            ScenarioConfig(ScenarioCls=SubprefixHijack, AdoptPolicyCls=ROVSimplePolicy),
+            ScenarioConfig(
+                ScenarioCls=SubprefixHijack,
+                AdoptPolicyCls=ROVSimplePolicy,
+                AnnCls=RustAnnouncement,
+            ),
         ),
         output_dir=Path("~/Desktop/main_ex").expanduser(),
         num_trials=1,

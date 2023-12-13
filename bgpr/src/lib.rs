@@ -1,14 +1,38 @@
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 use std::hash::{Hash, Hasher};
 
 #[pyclass]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RustRelationships {
-    Providers = 1,
-    Peers = 2,
-    Customers = 3,
-    Origin = 4,
-    Unknown = 5,
+    PROVIDERS = 1,
+    PEERS = 2,
+    CUSTOMERS = 3,
+    ORIGIN = 4,
+    UNKNOWN = 5,
+}
+#[pymethods]
+impl RustRelationships {
+    #[getter]
+    fn value(&self) -> i32 {
+        *self as i32
+    }
+    // Add a new associated method to get the name of the enum variant.
+    #[getter]
+    fn name(&self) -> &str {
+        match self {
+            RustRelationships::PROVIDERS => "PROVIDERS",
+            RustRelationships::PEERS => "PEERS",
+            RustRelationships::CUSTOMERS => "CUSTOMERS",
+            RustRelationships::ORIGIN => "ORIGIN",
+            RustRelationships::UNKNOWN => "UNKNOWN",
+        }
+    }
+
+    fn __hash__(&self) -> u64 {
+        // You can use the value of the enum as its hash
+        *self as u64
+    }
 }
 
 
@@ -30,7 +54,7 @@ pub struct RustAnnouncement {
 #[pymethods]
 impl RustAnnouncement {
     #[new]
-    #[pyo3(signature = (prefix, as_path, timestamp, seed_asn, roa_valid_length, roa_origin, recv_relationship, withdraw, traceback_end, communities))]
+    #[pyo3(signature = (prefix, as_path, timestamp, seed_asn, roa_valid_length, roa_origin, recv_relationship, withdraw=false, traceback_end=false, communities=Vec::new()))]
     fn new(
         prefix: String,
         as_path: Vec<i32>,
@@ -73,12 +97,15 @@ impl RustAnnouncement {
                     "prefix" => new_ann.prefix = value.extract::<String>(py)?,
                     "as_path" => new_ann.as_path = value.extract::<Vec<i32>>(py)?,
                     "timestamp" => new_ann.timestamp = value.extract::<i64>(py)?,
-                    // ... handle other fields similarly ...
+                    "seed_asn" => new_ann.seed_asn = value.extract::<Option<i32>>(py)?,
+                    "roa_valid_length" => new_ann.roa_valid_length = value.extract::<Option<bool>>(py)?,
+                    "roa_origin" => new_ann.roa_origin = value.extract::<Option<i32>>(py)?,
+                    "recv_relationship" => new_ann.recv_relationship = value.extract::<RustRelationships>(py)?,
                     "withdraw" => new_ann.withdraw = value.extract::<bool>(py)?,
                     "traceback_end" => new_ann.traceback_end = value.extract::<bool>(py)?,
                     "communities" => new_ann.communities = value.extract::<Vec<String>>(py)?,
                     _ => return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                        format!("Invalid field name: {}", key),
+                        format!("Field not found in RustAnnouncement: {}", key),
                     )),
                 }
             }
@@ -86,7 +113,69 @@ impl RustAnnouncement {
 
         Ok(new_ann)
     }
+    // Every attr needs a getter to be able to be used in Python
+    #[getter]
+    fn prefix(&self) -> &str {
+        &self.prefix
+    }
 
+    //#[getter]
+    //fn as_path(&self) -> Vec<i32> {
+    //    self.as_path.to_owned()
+    //}
+
+    #[getter]
+    fn as_path(&self, py: Python) -> Py<PyTuple> {
+        // Convert Vec<i32> to PyTuple
+        PyTuple::new(py, &self.as_path).into()
+    }
+
+    #[getter]
+    fn timestamp(&self) -> i64 {
+        self.timestamp
+    }
+
+    #[getter]
+    fn seed_asn(&self) -> Option<i32> {
+        self.seed_asn
+    }
+
+    #[getter]
+    fn roa_valid_length(&self) -> Option<bool> {
+        self.roa_valid_length
+    }
+
+    #[getter]
+    fn roa_origin(&self) -> Option<i32> {
+        self.roa_origin
+    }
+
+    #[getter]
+    fn recv_relationship(&self) -> RustRelationships {
+        self.recv_relationship
+    }
+
+    #[getter]
+    fn withdraw(&self) -> bool {
+        self.withdraw
+    }
+
+    #[getter]
+    fn traceback_end(&self) -> bool {
+        self.traceback_end
+    }
+
+    //#[getter]
+    //fn communities(&self) -> Vec<String> {
+    //    self.communities.to_owned()
+    //}
+    #[getter]
+    fn communities(&self, py: Python) -> Py<PyTuple> {
+        // Convert Vec<String> to PyTuple
+        PyTuple::new(py, &self.communities).into()
+    }
+
+    // Properties below
     #[getter]
     fn invalid_by_roa(&self) -> PyResult<bool> {
         Ok(match self.roa_origin {
@@ -127,6 +216,45 @@ impl RustAnnouncement {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         self.__str__()?.hash(&mut hasher);
         Ok(hasher.finish())
+    }
+
+    // For pickling
+    fn __getstate__(&self) -> PyResult<(String, Vec<i32>, i64, Option<i32>, Option<bool>, Option<i32>, RustRelationships, bool, bool, Vec<String>)> {
+        Ok((
+            self.prefix.clone(),
+            self.as_path.clone(),
+            self.timestamp,
+            self.seed_asn,
+            self.roa_valid_length,
+            self.roa_origin,
+            self.recv_relationship,
+            self.withdraw,
+            self.traceback_end,
+            self.communities.clone(),
+        ))
+    }
+
+    // Custom deserialization method
+    fn __setstate__(&mut self, py: Python, state: &PyAny) -> PyResult<()> {
+        let state_tuple: &PyTuple = state.extract()?;
+
+        if state_tuple.len() != 10 {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                "Invalid state length".to_string()
+            ));
+        }
+        self.prefix = state_tuple.get_item(0)?.extract::<String>()?;
+        self.as_path = state_tuple.get_item(1)?.extract::<Vec<i32>>()?;
+        self.timestamp = state_tuple.get_item(2)?.extract::<i64>()?;
+        self.seed_asn = state_tuple.get_item(3)?.extract::<Option<i32>>()?;
+        self.roa_valid_length = state_tuple.get_item(4)?.extract::<Option<bool>>()?;
+        self.roa_origin = state_tuple.get_item(5)?.extract::<Option<i32>>()?;
+        self.recv_relationship = state_tuple.get_item(6)?.extract::<RustRelationships>()?;
+        self.withdraw = state_tuple.get_item(7)?.extract::<bool>()?;
+        self.traceback_end = state_tuple.get_item(8)?.extract::<bool>()?;
+        self.communities = state_tuple.get_item(9)?.extract::<Vec<String>>()?;
+
+        Ok(())
     }
 }
 
