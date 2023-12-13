@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 
 #[pyclass]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum RustRelationships {
+pub enum RustRelationships {
     Providers = 1,
     Peers = 2,
     Customers = 3,
@@ -14,7 +14,7 @@ enum RustRelationships {
 
 #[pyclass]
 #[derive(Clone, Debug)]
-struct RustAnnouncement {
+pub struct RustAnnouncement {
     prefix: String,
     as_path: Vec<i32>,
     timestamp: i64,
@@ -128,4 +128,11 @@ impl RustAnnouncement {
         self.__str__()?.hash(&mut hasher);
         Ok(hasher.finish())
     }
+}
+
+#[pymodule]
+fn bgpr(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<RustAnnouncement>()?;
+    m.add_class::<RustRelationships>()?;
+    Ok(())
 }

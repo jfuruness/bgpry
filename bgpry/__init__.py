@@ -3,6 +3,7 @@ from . import simulation_framework
 from . import tests
 from . import enums
 from . import caida_collector
+from . import bgpr
 
 __all__ = [
     "caida_collector",
