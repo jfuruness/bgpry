@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from .simulation_engine import ROVSimplePolicy
 from .enums import SpecialPercentAdoptions
-from .simulation_engine import ROVSimpleAS
 from .simulation_framework import Simulation, SubprefixHijack, ScenarioConfig
 
 
@@ -19,7 +19,7 @@ def main():
             SpecialPercentAdoptions.ALL_BUT_ONE,
         ),
         scenario_configs=(
-            ScenarioConfig(ScenarioCls=SubprefixHijack, AdoptASCls=ROVSimpleAS),
+            ScenarioConfig(ScenarioCls=SubprefixHijack, AdoptPolicyCls=ROVSimplePolicy),
         ),
         output_dir=Path("~/Desktop/main_ex").expanduser(),
         num_trials=10,

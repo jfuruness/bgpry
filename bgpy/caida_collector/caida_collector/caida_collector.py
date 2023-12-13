@@ -28,6 +28,8 @@ from .data_extraction_funcs import _extract_ixp_ases
 from .data_extraction_funcs import _extract_provider_customers
 from .data_extraction_funcs import _extract_peers
 
+from bgpy.simulation_engine import BGPSimplePolicy
+
 
 class CaidaCollector:
     """Downloads relationships, determines metadata, and inserts to db"""
@@ -49,9 +51,17 @@ class CaidaCollector:
     _extract_provider_customers = _extract_provider_customers
     _extract_peers = _extract_peers
 
-    def __init__(self, BaseASCls: type[AS] = AS, GraphCls: type[BGPDAG] = BGPDAG):
+    def __init__(
+        self,
+        *,
+        BaseASCls: type[AS] = AS,
+        BasePolicyCls: type[BGPSimplePolicy] = BGPSimplePolicy,
+        GraphCls: type[BGPDAG] = BGPDAG,
+    ) -> None:
         # Base AS Class for the BGPDAG
         self.BaseASCls: type[AS] = BaseASCls
+        # Base Policy Class for the BGPDAG ASes
+        self.BasePolicyCls: type[BGPSimplePolicy] = BasePolicyCls
         # BGPDAG class
         self.GraphCls: type[BGPDAG] = GraphCls
 

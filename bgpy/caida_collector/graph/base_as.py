@@ -1,48 +1,20 @@
 from typing import Any, Optional, TYPE_CHECKING, Union
 
-from yamlable import yaml_info, YamlAble, yaml_info_decorate
+from yamlable import yaml_info, YamlAble
 
 if TYPE_CHECKING:
     from .base_as import AS as AStypeHint
+    from bgpy.simulation_engine import BGPSimplePolicy
 else:
     AStypeHint = "AS"
 
 SETUP_REL = Optional[set[AStypeHint]]
 REL = tuple[AStypeHint, ...]
 
-SLOTS = (
-    "asn",
-    "peers",
-    "customers",
-    "providers",
-    "input_clique",
-    "ixp",
-    "customer_cone_size",
-    "propagation_rank",
-    "rov_filtering",
-    "rov_confidence",
-    "rov_source",
-    "hashed_asn",
-)
-
 
 @yaml_info(yaml_tag="AS")
 class AS(YamlAble):
     """Autonomous System class. Contains attributes of an AS"""
-
-    base_slots = SLOTS
-    subclass_to_name_dict: dict[type[AStypeHint], str] = {}
-    name_to_subclass_dict: dict[str, type[AStypeHint]] = {}
-
-    def __init_subclass__(cls, *args, **kwargs):
-        """This method essentially creates a list of all subclasses
-        This is allows us to easily assign yaml tags
-        """
-
-        super().__init_subclass__(*args, **kwargs)
-        yaml_info_decorate(cls, yaml_tag=cls.__name__)
-        cls.subclass_to_name_dict[cls] = cls.__name__
-        cls.name_to_subclass_dict[cls.__name__] = cls
 
     def __init__(
         self,
@@ -57,6 +29,7 @@ class AS(YamlAble):
         customers: REL = tuple(),
         customer_cone_size: Optional[int] = None,
         propagation_rank: Optional[int] = None,
+        policy: Optional["BGPSimplePolicy"] = None,
     ):
         if isinstance(asn, int):
             self.asn: int = asn
@@ -87,9 +60,19 @@ class AS(YamlAble):
 
         self.hashed_asn = hash(self.asn)
 
+        assert policy, "This should never be None"
+        self.policy: BGPSimplePolicy = policy
+        self.policy.as_ = self
+
     def __lt__(self, as_obj: Any) -> bool:
         if isinstance(as_obj, AS):
             return self.asn < as_obj.asn
+        else:
+            return NotImplemented
+
+    def __eq__(self, as_obj: Any) -> bool:
+        if isinstance(as_obj, AS):
+            return self.asn == as_obj.asn
         else:
             return NotImplemented
 
@@ -113,8 +96,25 @@ class AS(YamlAble):
             else:
                 raise Exception(f"improper format type: {type(x)} {x}")
 
-        attrs = SLOTS + ("stubs", "stub", "multihomed", "transit")
-        return {attr: _format(getattr(self, attr)) for attr in attrs}
+        return {attr: _format(getattr(self, attr)) for attr in self.db_row_keys}
+
+    @property
+    def db_row_keys(self) -> tuple[str, ...]:
+        return (
+            "asn",
+            "peers",
+            "customers",
+            "providers",
+            "input_clique",
+            "ixp",
+            "customer_cone_size",
+            "propagation_rank",
+            "rov_filtering",
+            "rov_confidence",
+            "rov_source",
+            "hashed_asn",
+            # Don't forget the properties
+        ) + ("stubs", "stub", "multihomed", "transit")
 
     def __str__(self):
         return "\n".join(str(x) for x in self.db_row.items())
@@ -155,6 +155,7 @@ class AS(YamlAble):
 
     def __to_yaml_dict__(self) -> dict[str, Any]:
         """This optional method is called when you call yaml.dump()"""
+
         return {
             "asn": self.asn,
             "customers": tuple([x.asn for x in self.customers]),
@@ -164,11 +165,13 @@ class AS(YamlAble):
             "ixp": self.ixp,
             "customer_cone_size": self.customer_cone_size,
             "propagation_rank": self.propagation_rank,
+            "policy": self.policy,
         }
 
     @classmethod
     def __from_yaml_dict__(cls, dct: dict[Any, Any], yaml_tag: str):
         """This optional method is called when you call yaml.load()"""
+
         return cls(**dct)
 
 

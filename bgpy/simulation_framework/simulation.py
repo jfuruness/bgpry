@@ -7,7 +7,7 @@ from typing import Any, Optional, Union
 import random
 import os
 
-from bgpy.caida_collector import CaidaCollector
+from bgpy.caida_collector import CaidaCollector, AS
 
 from .graph_analyzer import GraphAnalyzer
 from .graph_factory import GraphFactory
@@ -17,9 +17,9 @@ from .scenarios import ScenarioConfig
 from .scenarios import SubprefixHijack
 
 from bgpy.enums import SpecialPercentAdoptions
-from bgpy.simulation_engine import BGPSimpleAS
+from bgpy.simulation_engine import BGPSimplePolicy
 from bgpy.simulation_engine import SimulationEngine
-from bgpy.simulation_engine import ROVSimpleAS
+from bgpy.simulation_engine import ROVSimplePolicy
 
 
 class Simulation:
@@ -33,7 +33,11 @@ class Simulation:
             0.8,
         ),
         scenario_configs: tuple[ScenarioConfig, ...] = tuple(
-            [ScenarioConfig(ScenarioCls=SubprefixHijack, AdoptASCls=ROVSimpleAS)]
+            [
+                ScenarioConfig(
+                    ScenarioCls=SubprefixHijack, AdoptPolicyCls=ROVSimplePolicy
+                )
+            ]
         ),
         num_trials: int = 2,
         propagation_rounds: int = 1,
@@ -42,6 +46,8 @@ class Simulation:
         python_hash_seed: Optional[int] = None,
         engine_kwargs: Optional[dict[Any, Any]] = None,
         caida_run_kwargs: Optional[dict[Any, Any]] = None,
+        CaidaCollectorCls: type[CaidaCollector] = CaidaCollector,
+        SimulationEngineCls: type[SimulationEngine] = SimulationEngine,
         GraphAnalyzerCls: type[GraphAnalyzer] = GraphAnalyzer,
         MetricTrackerCls: type[MetricTracker] = MetricTracker,
     ) -> None:
@@ -70,8 +76,9 @@ class Simulation:
             self.engine_kwargs: dict[Any, Any] = engine_kwargs
         else:
             self.engine_kwargs = {
-                "BaseASCls": BGPSimpleAS,
-                "GraphCls": SimulationEngine,
+                "BaseASCls": AS,
+                "BasePolicyCls": BGPSimplePolicy,
+                "GraphCls": SimulationEngineCls,
             }
 
         if caida_run_kwargs:
@@ -80,7 +87,10 @@ class Simulation:
             self.caida_run_kwargs = dict()
         # Done here so that the caida files are cached
         # So that multiprocessing doesn't interfere with one another
-        CaidaCollector().run(**self.caida_run_kwargs)
+        self.CaidaCollectorCls: type[CaidaCollector] = CaidaCollectorCls
+        self.CaidaCollectorCls().run(**self.caida_run_kwargs)
+
+        self.SimulationEngineCls: type[SimulationEngine] = SimulationEngineCls
 
         self.GraphAnalyzerCls: type[GraphAnalyzer] = GraphAnalyzerCls
         self.MetricTrackerCls: type[MetricTracker] = MetricTrackerCls
@@ -180,7 +190,7 @@ class Simulation:
         # Making nothing a reference does nothing
         run_kwargs = self.caida_run_kwargs.copy()
         run_kwargs["tsv_path"] = None
-        engine = CaidaCollector(**self.engine_kwargs.copy()).run(**run_kwargs)
+        engine = self.CaidaCollectorCls(**self.engine_kwargs.copy()).run(**run_kwargs)
 
         metric_tracker = self.MetricTrackerCls()
 

@@ -2,10 +2,14 @@
 
 import csv
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .base_as import AS
 from bgpy.caida_collector.links import CustomerProviderLink as CPLink
 from bgpy.caida_collector.links import PeerLink
+
+if TYPE_CHECKING:
+    from bgpy.simulation_engine import BGPSimplePolicy
 
 
 def _gen_graph(
@@ -14,7 +18,8 @@ def _gen_graph(
     peer_links: set[PeerLink],
     ixps: set[int],
     input_clique: set[int],
-    BaseAsCls: type[AS],
+    BaseASCls: type[AS],
+    BasePolicyCls: type["BGPSimplePolicy"],
 ):
     """Generates a graph of AS objects"""
 
@@ -22,12 +27,15 @@ def _gen_graph(
     assert len(cp_links) + len(peer_links) == len(cp_links | peer_links), msg
 
     def _gen_as(asn):
-        return BaseAsCls(
+        as_ = BaseASCls(
             asn,
             peers_setup_set=set(),
             customers_setup_set=set(),
             providers_setup_set=set(),
+            policy=BasePolicyCls(),
         )
+        assert as_.policy.as_ == as_, f"{BaseASCls} not setting policy.as_ correctly"
+        return as_
 
     # Add all links to the graph
     for link in cp_links | peer_links:

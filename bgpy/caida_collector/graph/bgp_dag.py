@@ -28,6 +28,8 @@ from .propagation_rank_funcs import _get_propagation_ranks
 from .customer_cone_funcs import _get_customer_cone_size
 from .customer_cone_funcs import _get_cone_size_helper
 
+from bgpy.simulation_engine.policies.bgp import BGPSimplePolicy
+
 
 @yaml_info(yaml_tag="BGPDAG")
 class BGPDAG(YamlAble):
@@ -64,6 +66,7 @@ class BGPDAG(YamlAble):
         ixp_asns: Optional[set[int]] = None,
         input_clique: Optional[set[int]] = None,
         BaseASCls: type[AS] = AS,
+        BasePolicyCls: type[BGPSimplePolicy] = BGPSimplePolicy,
         yaml_as_dict: Optional[dict[int, AS]] = None,
         yaml_ixp_asns: Optional[list[int]] = None,
         csv_path: Path = (Path(__file__).parent.parent / "combined.csv"),
@@ -106,6 +109,7 @@ class BGPDAG(YamlAble):
                 ixp_asns if ixp_asns else set(),
                 input_clique if input_clique else set(),
                 BaseASCls,
+                BasePolicyCls,
             )
             logging.debug("gen graph done")
             # Adds references to all relationships

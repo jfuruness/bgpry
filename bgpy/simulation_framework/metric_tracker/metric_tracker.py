@@ -103,12 +103,14 @@ class MetricTracker:
             #     pprint(x.percents)
             # input("waiting")
             for metric_key, trial_data in agg_percents.items():
-                assert metric_key.ASCls
+                assert metric_key.PolicyCls
                 row = {
                     "scenario_cls": data_key.scenario_config.ScenarioCls.__name__,
-                    "adopting_as_cls": data_key.scenario_config.AdoptASCls.__name__,
-                    "base_as_cls": data_key.scenario_config.BaseASCls.__name__,
-                    "as_cls": metric_key.ASCls.__name__,
+                    "AdoptingPolicyCls": (
+                        data_key.scenario_config.AdoptPolicyCls.__name__
+                    ),
+                    "BasePolicyCls": data_key.scenario_config.BasePolicyCls.__name__,
+                    "PolicyCls": metric_key.PolicyCls.__name__,
                     "outcome_type": metric_key.plane.name,
                     "as_group": metric_key.as_group.value,
                     "outcome": metric_key.outcome.name,
@@ -203,7 +205,7 @@ class MetricTracker:
         TODO: This should really be cleaned up, but good enough for now
         """
 
-        metrics = [Metric(x, scenario.as_classes_used) for x in self.metric_keys]
+        metrics = [Metric(x, scenario.policy_classes_used) for x in self.metric_keys]
         self._populate_metrics(
             metrics=metrics, engine=engine, scenario=scenario, outcomes=outcomes
         )
