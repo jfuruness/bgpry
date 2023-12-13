@@ -1,1 +1,1 @@
-Docs [here](https://github.com/jfuruness/bgpy/wiki)
+Docs [here](https://github.com/jfuruness/bgpry/wiki)
