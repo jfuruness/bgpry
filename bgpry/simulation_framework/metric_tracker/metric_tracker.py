@@ -17,6 +17,8 @@ from bgpry.simulation_engine import SimulationEngine
 from bgpry.simulation_framework.scenarios import Scenario
 from bgpry.simulation_framework.utils import get_all_metric_keys
 
+from bgpry.bgpr import RustAnnouncement
+
 
 class MetricTracker:
     """Tracks metrics used in graphs across trials"""
@@ -86,8 +88,36 @@ class MetricTracker:
             writer.writeheader()
             writer.writerows(rows)
 
+        # Must be done since it can't see the Rust objects
+        class CustomPickler(pickle.Pickler):
+            # https://docs.python.org/3/library/pickle.html#custom-reduction-for-types-functions-and-other-objects
+            def reducer_override(self, obj):
+                """Custom reducer for MyClass."""
+                if "Rust" in getattr(obj, "__name__", ""):
+                    return type, (obj.__name__, obj.__bases__, {})
+                else:
+                    # For any other object, fallback to usual reduction
+                    return NotImplemented
         with pickle_path.open("wb") as f:
-            pickle.dump(self.get_pickle_data(), f)
+            CustomPickler(f).dump(self.get_pickle_data())
+
+        """
+        def pickle_rust_announcement(obj):
+            # Return a tuple with the function to reconstruct the object and its args
+            return reconstruct_rust_announcement, ("Rust",)
+
+        def reconstruct_rust_announcement(name):
+            # Return a placeholder or the actual way to reconstruct the object
+            return f"Placeholder for {name}"
+        import copyreg
+
+        # Register the custom pickler for RustAnnouncement
+        copyreg.pickle(RustAnnouncement, pickle_rust_announcement)
+        """
+
+        # with pickle_path.open("wb") as f:
+        #     pickle.dump(self.get_pickle_data(), f)
+
 
     def get_csv_rows(self) -> list[dict[str, Any]]:
         """Returns rows for a CSV"""

@@ -8,7 +8,9 @@ from bgpry.bgpr import RustAnnouncement
 
 # Results:
 # PythonAnn + python: 73s
-# RustAnn + Python:
+# RustAnn + Python: 72s
+# PythonAnn + PyPy: 16s
+# RustAnn + PyPy: 46s, then 49s...
 
 
 class NoopGraphFactory:
