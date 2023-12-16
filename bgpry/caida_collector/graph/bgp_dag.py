@@ -120,6 +120,21 @@ class BGPDAG(YamlAble):
             # Remove duplicates from relationships and sort
             self._make_relationships_tuples()
             logging.debug("typles done")
+
+            # REMOVING STUBS FOR QUICK TEST!!!
+            from tqdm import tqdm
+            # run multiple times to get rid of stub chains
+            for _ in range(3):
+                print(len(self.as_dict))
+                for stub_asn, stub_as in tqdm(self.as_dict.copy().items(), total=len(self.as_dict), desc="removing stubs!"):
+                    if stub_as.stub:
+                        del self.as_dict[stub_asn]
+                        for as_obj in stub_as.neighbors:
+                            as_obj.peers = tuple([x for x in as_obj.peers if x.asn != stub_asn])
+                            as_obj.customers = tuple([x for x in as_obj.customers if x.asn != stub_asn])
+                            as_obj.providers = tuple([x for x in as_obj.providers if x.asn != stub_asn])
+                print(len(self.as_dict))
+
             # Assign propagation rank to each AS
             self._assign_propagation_ranks()
             logging.debug("assigned prop ranks")

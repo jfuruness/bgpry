@@ -53,6 +53,8 @@ def _gen_graph(
         self.as_dict[asn].input_clique = True
 
 
+
+
 def _add_relationships(self, cp_links: set[CPLink], peer_links: set[PeerLink]):
     """Adds relationships to the graph as references"""
 

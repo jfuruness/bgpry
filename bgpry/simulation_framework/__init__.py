@@ -10,6 +10,7 @@ from .scenarios import NonRoutedPrefixHijack
 from .scenarios import SuperprefixPrefixHijack
 from .scenarios import NonRoutedSuperprefixHijack
 from .scenarios import NonRoutedSuperprefixPrefixHijack
+from .scenarios import MultiPrefix
 from .scenarios import ValidPrefix
 
 from .simulation import Simulation
@@ -29,6 +30,7 @@ __all__ = [
     "SuperprefixPrefixHijack",
     "NonRoutedSuperprefixHijack",
     "NonRoutedSuperprefixPrefixHijack",
+    "MultiPrefix",
     "ValidPrefix",
     "Simulation",
     "get_real_world_rov_asn_cls_dict",

@@ -3,7 +3,7 @@ import time
 
 from bgpry.simulation_engine import ROVSimplePolicy
 from bgpry.enums import SpecialPercentAdoptions
-from bgpry.simulation_framework import Simulation, SubprefixHijack, ScenarioConfig
+from bgpry.simulation_framework import Simulation, SubprefixHijack, ScenarioConfig, MultiPrefix
 from bgpry.bgpr import RustAnnouncement
 
 # Results:
@@ -28,17 +28,17 @@ def main():
         python_hash_seed=0,
         percent_adoptions=(
             SpecialPercentAdoptions.ONLY_ONE,
-            0.1,
-            0.2,
-            0.5,
-            0.8,
-            SpecialPercentAdoptions.ALL_BUT_ONE,
+            #0.1,
+            #0.2,
+            #0.5,
+            #0.8,
+            #SpecialPercentAdoptions.ALL_BUT_ONE,
         ),
         scenario_configs=(
             ScenarioConfig(
-                ScenarioCls=SubprefixHijack,
+                ScenarioCls=MultiPrefix,#SubprefixHijack,
                 AdoptPolicyCls=ROVSimplePolicy,
-                AnnCls=RustAnnouncement,
+                # AnnCls=RustAnnouncement,
             ),
         ),
         output_dir=Path("~/Desktop/main_ex").expanduser(),

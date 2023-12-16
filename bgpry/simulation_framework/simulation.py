@@ -256,9 +256,13 @@ class Simulation:
     ) -> None:
         """Single engine run"""
 
+        import time
+        start = time.perf_counter()
+        print("Starting engine run")
         # Run the engine
         engine.run(propagation_round=propagation_round, scenario=scenario)
-
+        print(time.perf_counter() - start)
+        raise Exception("Done with test lol")
         # Pre-aggregation Hook
         scenario.pre_aggregation_hook(
             engine=engine,
