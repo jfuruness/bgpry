@@ -123,7 +123,7 @@ class BGPDAG(YamlAble):
 
             # REMOVING STUBS FOR QUICK TEST!!!
             from tqdm import tqdm
-            # run multiple times to get rid of stub chains
+            # run multiple times to get rid of stub chains (if you're actually doing this, you need to run this in a much better fashion lol)
             for _ in range(3):
                 print(len(self.as_dict))
                 for stub_asn, stub_as in tqdm(self.as_dict.copy().items(), total=len(self.as_dict), desc="removing stubs!"):
