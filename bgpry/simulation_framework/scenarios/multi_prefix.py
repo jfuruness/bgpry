@@ -58,7 +58,9 @@ class MultiPrefix(Scenario):
             import csv
             from tqdm import tqdm
             reader = csv.DictReader(f, delimiter="\t")
-            for row in tqdm(reader, desc="Reading anns", total=1000):
+            for i, row in enumerate(tqdm(reader, desc="Reading anns", total=100)):
+                if i > 100:
+                    continue
                 as_path = row["as_path"]
                 if "{" in as_path:
                     continue

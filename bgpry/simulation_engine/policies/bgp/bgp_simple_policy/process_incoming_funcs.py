@@ -31,6 +31,7 @@ def process_incoming_anns(
     for prefix, ann_list in self._recv_q.prefix_anns():
         # Get announcement currently in local rib
         current_ann: Ann = self._local_rib.get_ann(prefix)
+        og_ann = True
         current_processed: bool = True
 
         # Seeded Ann will never be overriden, so continue
@@ -41,6 +42,15 @@ def process_incoming_anns(
             # Make sure there are no loops
             # In ROV subclass also check roa validity
             if self._valid_ann(ann, from_rel):
+                new_ann_processed = self._copy_and_process(ann, from_rel)
+                # Determine if the new ann is better
+                new_ann_better: bool = self._new_ann_better(
+                    current_ann, current_processed, from_rel, new_ann_processed, True, from_rel
+                )
+                if new_ann_better:
+                    current_ann = ann
+                    og_ann = False
+                continue
                 # Determine if the new ann is better
                 new_ann_better: bool = self._new_ann_better(
                     current_ann, current_processed, from_rel, ann, False, from_rel
@@ -50,6 +60,10 @@ def process_incoming_anns(
                     current_ann = ann
                     current_processed = False
 
+
+        if not og_ann:
+
+            self._local_rib.add_ann(current_ann)
         # This is a new best ann. Process it and add it to the local rib
         if current_processed is False:
             current_ann = self._copy_and_process(current_ann, from_rel)
